@@ -25,6 +25,10 @@ public class EspiralMax {
             new EspiralCommand("DOWN", Y, -1)
     ));
 
+    /* Not thread safe */
+    public static Long primesCount = 0L;
+    public static Integer diagonalCount = 0;
+
     public static int getEspiralOrderWithDiagonalPrimesUnderPercentage(int minPercentage){
         //Initial espiral order and pointers
         int order = 7;
@@ -42,7 +46,7 @@ public class EspiralMax {
 
         int i = 1;
         boolean found = false;
-        while (order < 2000) {
+        while (currentEspiralPercentage >= 10) {
             espiral.put(new Pair(x, y), i);
             commandExecutions++;
 
@@ -95,11 +99,13 @@ public class EspiralMax {
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
 
-        long primes = diagonalNumbers.stream()
+        diagonalCount += diagonalNumbers.size();
+        primesCount += diagonalNumbers.stream()
                 .filter(i -> BigInteger.valueOf(i).isProbablePrime(100))
                 .count();
+        espiral.clear();
 
-        return (primes * 1D / diagonalNumbers.size()) * 100;
+        return (primesCount * 1D / diagonalCount) * 100;
     }
 
     public static void main(String[] args) throws IOException {
