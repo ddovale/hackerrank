@@ -1,30 +1,37 @@
 package payments;
 
+import javafx.util.Pair;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class EspiralMax {
 
-    public static final String COLUMN = "COL";
-    public static final String ROW = "ROW";
+    public static final String X = "X";
+    public static final String Y = "Y";
     public static final List<EspiralCommand> espiralCommands = Collections.unmodifiableList(Arrays.asList(
-            new EspiralCommand("RIGHT", COLUMN, 1),
-            new EspiralCommand("UP", ROW, -1),
-            new EspiralCommand("LEFT", COLUMN, -1),
-            new EspiralCommand("DOWN", ROW, 1)
+            new EspiralCommand("RIGHT", X, 1),
+            new EspiralCommand("UP", Y, 1),
+            new EspiralCommand("LEFT", X, -1),
+            new EspiralCommand("DOWN", Y, -1)
     ));
 
-    public static int[][] generateEspiral(int n){
-
-        int order = n;
-        int rowPos = (order / 2);
-        int colPos = (order % 2) == 0 ? (order / 2) - 1 : (order / 2);
-        int[][] espiral = new int[order][order];
+    public static int getEspiralOrderWithDiagonalPrimesUnderPercentage(int minPercentage){
+        //Initial espiral order and pointers
+        int order = 7;
+        int x = 0;
+        int y = 0;
+        Map<Pair<Integer, Integer>, Integer> espiral = new LinkedHashMap<>();
+        Double currentEspiralPercentage = new Double(100);
 
         //Initialize first command
         Iterator<EspiralCommand> commandsIterator = espiralCommands.iterator();
@@ -33,9 +40,25 @@ public class EspiralMax {
         int commandExecutions = -1; //Times that command was used
         int commandsSwapped = 0; //Times that swap between commands
 
-        for (int i = 1; i <= order*order; i++) {
-            espiral[rowPos][colPos] = i;
+        int i = 1;
+        boolean found = false;
+        while (order < 2000) {
+            espiral.put(new Pair(x, y), i);
             commandExecutions++;
+
+            //Closed current order espiral
+            if (i == order*order) {
+                currentEspiralPercentage = espiralPrimePercentage(espiral);
+
+                //Reached the order desired
+                if (currentEspiralPercentage < minPercentage) {
+                    found = true;
+                    break;
+                } else {
+                    order+=2;
+                }
+            }
+            i++;
 
             //Max executions reached, must swap command
             if (commandExecutions == commandOffset) {
@@ -52,15 +75,31 @@ public class EspiralMax {
                 }
             }
 
-            //Move cursor for the next insert position
-            if (currentCommand.getSource() == COLUMN) {
-                colPos += 1 * currentCommand.getDirection();
+            //Move point for the next insert position
+            if (currentCommand.getSource() == X) {
+                x += 1 * currentCommand.getDirection();
             } else {
-                rowPos += 1 * currentCommand.getDirection();
+                y += 1 * currentCommand.getDirection();
             }
         }
 
-        return espiral;
+        if (!found)
+            throw new RuntimeException("OMG...");
+
+        return order;
+    }
+
+    public static Double espiralPrimePercentage(Map<Pair<Integer, Integer>, Integer> espiral) {
+        List<Integer> diagonalNumbers = espiral.entrySet().stream()
+                .filter(e -> Math.abs(e.getKey().getKey()) == Math.abs(e.getKey().getValue())) // |x|==|y|
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        long primes = diagonalNumbers.stream()
+                .filter(i -> BigInteger.valueOf(i).isProbablePrime(100))
+                .count();
+
+        return (primes * 1D / diagonalNumbers.size()) * 100;
     }
 
     public static void main(String[] args) throws IOException {
@@ -68,28 +107,14 @@ public class EspiralMax {
 
         int n = Integer.parseInt(bufferedReader.readLine().trim());
 
+        int order = getEspiralOrderWithDiagonalPrimesUnderPercentage(n);
 
-
-
-        int[][] espiral = generateEspiral(n);
-        for (int i = 0; i < espiral.length; i++) {
-            for (int j = 0; j < espiral.length; j++) {
-                System.out.print(" " + String.format("%02d", espiral[i][j]) + " ");
-            }
-            System.out.println();
-        }
-
-
-
-
-
-        System.out.println(n);
+        System.out.println(order);
 
         bufferedReader.close();
     }
 
     public static class EspiralCommand {
-
         private String name;
         private String source;
         private Integer direction;
