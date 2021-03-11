@@ -45,7 +45,6 @@ public class EspiralMax {
         int commandsSwapped = 0; //Times that swap between commands
 
         int i = 1;
-        boolean found = false;
         while (currentEspiralPercentage >= 10) {
             espiral.put(new Pair(x, y), i);
             commandExecutions++;
@@ -56,7 +55,6 @@ public class EspiralMax {
 
                 //Reached the order desired
                 if (currentEspiralPercentage < minPercentage) {
-                    found = true;
                     break;
                 } else {
                     order+=2;
@@ -86,9 +84,6 @@ public class EspiralMax {
                 y += 1 * currentCommand.getDirection();
             }
         }
-
-        if (!found)
-            throw new RuntimeException("OMG...");
 
         return order;
     }
