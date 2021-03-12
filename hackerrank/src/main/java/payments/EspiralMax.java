@@ -1,7 +1,5 @@
 package payments;
 
-import javafx.util.Pair;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,10 +7,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class EspiralMax {
 
@@ -25,16 +20,13 @@ public class EspiralMax {
             new EspiralCommand("DOWN", Y, -1)
     ));
 
-    /* Not thread safe */
-    public static Long primesCount = 0L;
-    public static Integer diagonalCount = 0;
-
-    public static int getEspiralOrderWithDiagonalPrimesUnderPercentage(int minPercentage){
+    public static int getEspiralOrderWithDiagonalPrimesUnderPercentage(int minPercentage) {
         //Initial espiral order and pointers
         int order = 7;
         int x = 0;
         int y = 0;
-        Map<Pair<Integer, Integer>, Integer> espiral = new LinkedHashMap<>();
+        int diagonalCount = 0;
+        int primesCount = 0;
         Double currentEspiralPercentage = new Double(100);
 
         //Initialize first command
@@ -46,12 +38,18 @@ public class EspiralMax {
 
         int i = 1;
         while (currentEspiralPercentage >= 10) {
-            espiral.put(new Pair(x, y), i);
+            if (Math.abs(x) == Math.abs(y)) {
+                if (BigInteger.valueOf(i).isProbablePrime(100)) {
+                    primesCount++;
+                }
+                diagonalCount++;
+            }
+
             commandExecutions++;
 
             //Closed current order espiral
             if (i == order*order) {
-                currentEspiralPercentage = espiralPrimePercentage(espiral);
+                currentEspiralPercentage = (primesCount * 1D / diagonalCount) * 100;
 
                 //Reached the order desired
                 if (currentEspiralPercentage < minPercentage) {
@@ -86,21 +84,6 @@ public class EspiralMax {
         }
 
         return order;
-    }
-
-    public static Double espiralPrimePercentage(Map<Pair<Integer, Integer>, Integer> espiral) {
-        List<Integer> diagonalNumbers = espiral.entrySet().stream()
-                .filter(e -> Math.abs(e.getKey().getKey()) == Math.abs(e.getKey().getValue())) // |x|==|y|
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-
-        diagonalCount += diagonalNumbers.size();
-        primesCount += diagonalNumbers.stream()
-                .filter(i -> BigInteger.valueOf(i).isProbablePrime(100))
-                .count();
-        espiral.clear();
-
-        return (primesCount * 1D / diagonalCount) * 100;
     }
 
     public static void main(String[] args) throws IOException {
